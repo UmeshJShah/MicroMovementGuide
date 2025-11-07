@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
     <uses-feature
         android:name="android.hardware.touchscreen"
         android:required="false" />
@@ -26,6 +28,11 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ExerciseActivity"
+            android:theme="@style/Theme.Transparent"
+            android:exported="false" />
+        <service android:name=".ExerciseService" />
     </application>
 
 </manifest>
