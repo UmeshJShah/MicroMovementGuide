@@ -1,0 +1,37 @@
+[
+  {
+    "exercise_name": "Neck Stretches",
+    "suggested_filename": "neck_stretch.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A person sitting upright on a simple chair. The head gently tilts to the left, holds for a moment, returns to the center, then gently tilts to the right, and holds. The movement should be slow and smooth."
+  },
+  {
+    "exercise_name": "Hand Clenches",
+    "suggested_filename": "hand_clenches.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A close-up of a hand. The hand starts open with fingers extended, then slowly closes into a gentle fist, holds for a moment, and then slowly opens back up to a fully extended position."
+  },
+  {
+    "exercise_name": "Ankle Rotations",
+    "suggested_filename": "ankle_rotations.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A side view of a person sitting on a simple chair, with one leg extended slightly. The foot and ankle perform slow, deliberate clockwise rotations, followed by slow, deliberate counter-clockwise rotations."
+  },
+  {
+    "exercise_name": "Shoulder Rolls",
+    "suggested_filename": "shoulder_rolls.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A person sitting upright on a simple chair. The shoulders slowly roll upwards towards the ears, then backwards, then down, in a smooth circular motion. The animation should show a few rotations in one direction, then reverse."
+  },
+  {
+    "exercise_name": "Seated Marching",
+    "suggested_filename": "seated_marching.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A person sitting upright on a simple chair. They lift their left knee up towards their chest, then lower it. As the left foot touches the ground, the right knee begins to lift up. The motion should be like a slow, deliberate march while seated."
+  },
+  {
+    "exercise_name": "Wrist Bends",
+    "suggested_filename": "wrist_bends.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A close-up of an arm extended forward. A second hand gently holds the wrist. The hand of the extended arm slowly bends downwards, holds, then slowly bends upwards, and holds. The supporting hand remains stationary."
+  },
+  {
+    "exercise_name": "Deep Breathing",
+    "suggested_filename": "deep_breathing.json",
+    "generation_prompt": "Create a short, seamlessly looping 2D vector animation of a stylized, gender-neutral person. The style should be minimalist and clean, using thick, rounded lines. The color palette should be simple: a light grey figure (#E0E0E0) with one accent color (#4285F4) to highlight the moving body part. The background should be transparent. The output must be a Lottie JSON file. The animation should clearly show: A person sitting upright on a simple chair. A simple visual representation of lungs inside the chest cavity slowly expands as they inhale, and slowly contracts as they exhale. The shoulders should remain relaxed."
+  }
+]

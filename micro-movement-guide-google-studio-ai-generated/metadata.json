@@ -1,0 +1,5 @@
+{
+  "name": "Micro-Movement Guide for Parkinson's",
+  "description": "An assistive TV app that pauses video playback at set intervals to guide users through short, beneficial micro-movements, specifically designed for individuals with Parkinson's disease.",
+  "requestFramePermissions": []
+}

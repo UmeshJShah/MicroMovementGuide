@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro Movement Guide - Animation Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .card p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .animation-container {
+            width: 100%;
+            height: 250px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .play-btn {
+            background: #4285F4;
+            color: white;
+        }
+
+        .play-btn:hover {
+            background: #3367d6;
+        }
+
+        .pause-btn {
+            background: #34A853;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #2d8e47;
+        }
+
+        .stop-btn {
+            background: #EA4335;
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: #d33426;
+        }
+
+        .info-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            color: #666;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+
+        .info-box li strong {
+            color: #4285F4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Micro Movement Guide</h1>
+        <p class="subtitle">Programmatically Generated Lottie Animations for Exercise Guidance</p>
+
+        <div class="grid">
+            <div class="card">
+                <h2>👔 Shoulder Rolls</h2>
+                <p>Circular rolling motion showing upward, backward, and downward shoulder movement with shadow effects.</p>
+                <div class="animation-container" id="shoulder_rolls"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.shoulder_rolls.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.shoulder_rolls.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.shoulder_rolls.stop()">⏹ Stop</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🗣️ Neck Stretch</h2>
+                <p>Side-to-side tilting motion demonstrating gentle neck stretching exercises.</p>
+                <div class="animation-container" id="neck_stretch"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.neck_stretch.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.neck_stretch.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.neck_stretch.stop()">⏹ Stop</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>✋ Hand Clenches</h2>
+                <p>Five animated fingers showing clenching and releasing motion in a fan pattern.</p>
+                <div class="animation-container" id="hand_clenches"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.hand_clenches.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.hand_clenches.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.hand_clenches.stop()">⏹ Stop</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🦶 Ankle Rotations</h2>
+                <p>360-degree rotation with directional arrow showing circular ankle movement.</p>
+                <div class="animation-container" id="ankle_rotations"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.ankle_rotations.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.ankle_rotations.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.ankle_rotations.stop()">⏹ Stop</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🚶 Seated Marching</h2>
+                <p>Alternating leg lifts showing marching motion while seated, two different colors.</p>
+                <div class="animation-container" id="seated_marching"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.seated_marching.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.seated_marching.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.seated_marching.stop()">⏹ Stop</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💪 Wrist Bends</h2>
+                <p>Forearm and hand showing wrist flexion and extension with pivot point animation.</p>
+                <div class="animation-container" id="wrist_bends"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.wrist_bends.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.wrist_bends.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.wrist_bends.stop()">⏹ Stop</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🫁 Deep Breathing</h2>
+                <p>Expanding and contracting circle with opacity changes representing breathing rhythm.</p>
+                <div class="animation-container" id="deep_breathing"></div>
+                <div class="controls">
+                    <button class="play-btn" onclick="controls.deep_breathing.play()">▶ Play</button>
+                    <button class="pause-btn" onclick="controls.deep_breathing.pause()">⏸ Pause</button>
+                    <button class="stop-btn" onclick="controls.deep_breathing.stop()">⏹ Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>📊 Animation Specifications</h3>
+            <ul>
+                <li><strong>Format:</strong> Lottie JSON (v5.5.2)</li>
+                <li><strong>Frame Rate:</strong> 60 FPS</li>
+                <li><strong>Duration:</strong> 3 seconds (180 frames)</li>
+                <li><strong>Canvas Size:</strong> 512x512 pixels</li>
+                <li><strong>Color Palette:</strong> Google Material Design colors</li>
+                <li><strong>Effects:</strong> Drop shadows, opacity transitions, multi-layer animations</li>
+                <li><strong>Generation Method:</strong> Programmatically created with python-lottie</li>
+                <li><strong>Total File Size:</strong> ~100KB for all 7 animations</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const controls = {};
+        const animations = [
+            'shoulder_rolls',
+            'neck_stretch',
+            'hand_clenches',
+            'ankle_rotations',
+            'seated_marching',
+            'wrist_bends',
+            'deep_breathing'
+        ];
+
+        animations.forEach(name => {
+            const container = document.getElementById(name);
+            controls[name] = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: `tv/src/main/assets/${name}.json`
+            });
+        });
+    </script>
+</body>
+</html>
