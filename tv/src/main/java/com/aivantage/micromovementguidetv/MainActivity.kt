@@ -1,47 +1,190 @@
 package com.aivantage.micromovementguidetv
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.tv.material3.Text
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.Icon
+import androidx.tv.material3.IconButton
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
+import androidx.tv.material3.Text
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
 
+private const val KILL_SWITCH_PRESS_COUNT = 5
+private const val KILL_SWITCH_INTERVAL_MS = 1000L // 1 second
+
 class MainActivity : ComponentActivity() {
+
+    private var killSwitchPresses = 0
+    private var lastKillSwitchPressTime = 0L
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MicroMovementGuideTheme {
+                val context = LocalContext.current
+                var hasOnboarded by remember { mutableStateOf(SettingsManager.hasOnboarded(context)) }
+                var appSettings by remember { mutableStateOf(SettingsManager.getSettings(context)) }
+                var currentScreen by remember { mutableStateOf("Main") }
+                var isKilled by remember { mutableStateOf(false) }
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = RectangleShape
                 ) {
-                    Greeting("Android")
+                    if (isKilled) {
+                        KillSwitchScreen()
+                    } else if (!hasOnboarded) {
+                        OnboardingScreen(onOnboardingComplete = {
+                            SettingsManager.setHasOnboarded(context, true)
+                            hasOnboarded = true
+                            val serviceIntent = Intent(context, ExerciseService::class.java).apply {
+                                putExtra("appSettings", appSettings)
+                            }
+                            context.startService(serviceIntent)
+                        })
+                    } else {
+                        when (currentScreen) {
+                            "Main" -> MainScreen(onSettingsClicked = { currentScreen = "Settings" })
+                            "Settings" -> SettingsScreen(
+                                initialSettings = appSettings,
+                                onSave = { newSettings ->
+                                    SettingsManager.saveSettings(context, newSettings)
+                                    appSettings = newSettings
+                                    currentScreen = "Main"
+                                    // Restart the service with the new settings
+                                    context.stopService(Intent(context, ExerciseService::class.java))
+                                    val serviceIntent = Intent(context, ExerciseService::class.java).apply {
+                                        putExtra("appSettings", newSettings)
+                                    }
+                                    context.startService(serviceIntent)
+                                },
+                                onClose = { currentScreen = "Main" }
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            val now = System.currentTimeMillis()
+            if (now - lastKillSwitchPressTime < KILL_SWITCH_INTERVAL_MS) {
+                killSwitchPresses++
+            } else {
+                killSwitchPresses = 1
+            }
+            lastKillSwitchPressTime = now
+
+            if (killSwitchPresses >= KILL_SWITCH_PRESS_COUNT) {
+                stopService(Intent(this, ExerciseService::class.java))
+                setContent {
+                    MicroMovementGuideTheme {
+                        KillSwitchScreen()
+                    }
+                }
+                return true // Consume the event
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
 }
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun MainScreen(onSettingsClicked: () -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = "Micro-Movement Guide is active.")
+        IconButton(
+            onClick = onSettingsClicked,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .focusRequester(focusRequester)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings"
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun KillSwitchScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Micro-Movement Guide has been paused.",
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Please restart the app to enable it again.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MainScreenPreview() {
     MicroMovementGuideTheme {
-        Greeting("Android")
+        MainScreen(onSettingsClicked = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun KillSwitchScreenPreview() {
+    MicroMovementGuideTheme {
+        KillSwitchScreen()
     }
 }
