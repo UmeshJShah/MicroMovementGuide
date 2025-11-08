@@ -8,50 +8,44 @@ object ExerciseDatabase {
             id = "neck_stretch_side_to_side",
             name = "Neck Stretches",
             instruction = "Gently tilt your head from side to side, holding each stretch for a few seconds.",
-            iconName = "ic_neck_stretch",
-            animationName = "neck_stretch.json" // Future-proofing
+            iconName = "ic_neck_stretch"
         ),
         ExerciseDefinition(
             id = "hand_clenches",
             name = "Hand Clenches",
             instruction = "Slowly open and close your hands, stretching your fingers wide and then making a gentle fist.",
-            iconName = "ic_hand_clench",
-            animationName = "hand_clenches.json"
+            iconName = "ic_hand_clench"
         ),
         ExerciseDefinition(
             id = "ankle_rotations",
             name = "Ankle Rotations",
             instruction = "Lift one foot slightly and gently rotate your ankle in circles, first one way, then the other. Repeat with the other foot.",
-            iconName = "ic_ankle_rotation",
-            animationName = "ankle_rotations.json"
+            iconName = "ic_ankle_rotation"
         ),
         ExerciseDefinition(
             id = "shoulder_rolls",
             name = "Shoulder Rolls",
             instruction = "Gently roll your shoulders upwards, backwards, and down. Then reverse the direction.",
             iconName = "ic_shoulder_roll",
-            animationName = "shoulder_rolls.json"
+            lottieAnimationName = "shoulder_roll.json" // Here is our new Lottie animation
         ),
         ExerciseDefinition(
             id = "seated_marching",
             name = "Seated Marching",
             instruction = "While seated, lift your knees one at a time as if you are marching.",
-            iconName = "ic_seated_marching",
-            animationName = "seated_marching.json"
+            iconName = "ic_seated_marching"
         ),
         ExerciseDefinition(
             id = "wrist_bends",
             name = "Wrist Bends",
             instruction = "Extend one arm and gently bend your wrist up and down with your other hand.",
-            iconName = "ic_wrist_bends",
-            animationName = "wrist_bends.json"
+            iconName = "ic_wrist_bends"
         ),
         ExerciseDefinition(
             id = "deep_breathing",
             name = "Deep Breathing",
             instruction = "Breathe in slowly and deeply through your nose, and then exhale slowly through your mouth.",
-            iconName = "ic_deep_breathing",
-            animationName = "deep_breathing.json"
+            iconName = "ic_deep_breathing"
         )
     )
 

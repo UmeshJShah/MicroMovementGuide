@@ -9,7 +9,7 @@ data class ExerciseDefinition(
     val name: String, // User-facing name like "Neck Stretches"
     val instruction: String, // Detailed instruction text
     val iconName: String, // The name of the drawable resource, e.g., "ic_neck_stretch"
-    val animationName: String? = null // Future-proofing for Lottie animations
+    val lottieAnimationName: String? = null // Field for Lottie animations
 )
 
 // Represents one step in an exercise routine.
