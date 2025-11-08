@@ -10,6 +10,7 @@ object SettingsManager {
     private const val KEY_BREAK_INTERVAL = "breakInterval"
     private const val KEY_EXERCISE_DURATION = "exerciseDuration"
     private const val KEY_CONDITION = "condition"
+    private const val KEY_IS_HIGH_CONTRAST = "isHighContrast"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -28,7 +29,8 @@ object SettingsManager {
         return AppSettings(
             breakInterval = prefs.getInt(KEY_BREAK_INTERVAL, 20),
             exerciseDuration = prefs.getInt(KEY_EXERCISE_DURATION, 3),
-            condition = prefs.getString(KEY_CONDITION, CONDITIONS.first()) ?: CONDITIONS.first()
+            condition = prefs.getString(KEY_CONDITION, CONDITIONS.first()) ?: CONDITIONS.first(),
+            isHighContrast = prefs.getBoolean(KEY_IS_HIGH_CONTRAST, false)
         )
     }
 
@@ -38,6 +40,7 @@ object SettingsManager {
             putInt(KEY_BREAK_INTERVAL, settings.breakInterval)
             putInt(KEY_EXERCISE_DURATION, settings.exerciseDuration)
             putString(KEY_CONDITION, settings.condition)
+            putBoolean(KEY_IS_HIGH_CONTRAST, settings.isHighContrast)
             apply()
         }
     }

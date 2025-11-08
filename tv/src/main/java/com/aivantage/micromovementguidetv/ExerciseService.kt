@@ -6,6 +6,7 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -13,6 +14,7 @@ import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ExerciseService : Service() {
@@ -23,6 +25,7 @@ class ExerciseService : Service() {
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private val binder = ExerciseServiceBinder()
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun onBind(intent: Intent?): IBinder {
         AppLogger.log(this, "ExerciseService bound.")
@@ -54,7 +57,10 @@ class ExerciseService : Service() {
         serviceScope.launch {
             AppLogger.log(this@ExerciseService, "Requesting audio focus.")
             if (requestAudioFocus()) {
-                AppLogger.log(this@ExerciseService, "Audio focus granted, starting ExerciseActivity.")
+                AppLogger.log(this@ExerciseService, "Audio focus granted, playing chime.")
+                playChime()
+                delay(2000) // Wait for 2 seconds
+                AppLogger.log(this@ExerciseService, "Starting ExerciseActivity.")
                 val exerciseIntent = Intent(this@ExerciseService, ExerciseActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     putExtra("appSettings", appSettings)
@@ -66,6 +72,15 @@ class ExerciseService : Service() {
             }
         }
         return START_STICKY
+    }
+
+    private fun playChime() {
+        mediaPlayer = MediaPlayer.create(this, R.raw.chime)
+        mediaPlayer?.setOnCompletionListener {
+            it.release()
+            mediaPlayer = null
+        }
+        mediaPlayer?.start()
     }
 
     private fun requestAudioFocus(): Boolean {
@@ -112,6 +127,8 @@ class ExerciseService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         AppLogger.log(this, "ExerciseService destroyed.")
+        mediaPlayer?.release()
+        mediaPlayer = null
         abandonAudioFocus()
         serviceJob.cancel()
     }

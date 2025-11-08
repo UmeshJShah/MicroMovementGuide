@@ -26,6 +26,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
@@ -44,15 +45,17 @@ import kotlinx.coroutines.delay
 @Composable
 fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
     var view by rememberSaveable { mutableStateOf("prompt") }
+    val backgroundAlpha = if (appSettings.isHighContrast) 0.9f else 0.75f
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.75f))
+            .background(Color.Black.copy(alpha = backgroundAlpha))
     ) {
         when (view) {
             "prompt" -> {
                 PromptView(
+                    appSettings = appSettings,
                     onStart = { view = "exercising" },
                     onDismiss = onComplete
                 )
@@ -64,7 +67,7 @@ fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
                 )
             }
             "finished" -> {
-                FinishedView(onComplete = onComplete)
+                FinishedView(appSettings = appSettings, onComplete = onComplete)
             }
         }
     }
@@ -72,8 +75,9 @@ fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun PromptView(onStart: () -> Unit, onDismiss: () -> Unit) {
+fun PromptView(appSettings: AppSettings, onStart: () -> Unit, onDismiss: () -> Unit) {
     val okButtonFocusRequester = remember { FocusRequester() }
+    val fontWeight = if (appSettings.isHighContrast) FontWeight.Bold else FontWeight.Normal
 
     Column(
         modifier = Modifier
@@ -82,9 +86,9 @@ fun PromptView(onStart: () -> Unit, onDismiss: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Time for a movement break!", style = MaterialTheme.typography.headlineLarge)
+        Text("Time for a movement break!", style = MaterialTheme.typography.headlineLarge, fontWeight = fontWeight)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Let's do a few gentle exercises to keep you moving.", style = MaterialTheme.typography.bodyLarge)
+        Text("Let's do a few gentle exercises to keep you moving.", style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
         Spacer(modifier = Modifier.height(32.dp))
         Row {
             Button(
@@ -112,15 +116,26 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
     val steps = remember { exercisePack?.steps ?: emptyList() }
     var currentStepIndex by rememberSaveable { mutableStateOf(0) }
     var timeLeft by rememberSaveable { mutableStateOf(0) }
+    var isPaused by rememberSaveable { mutableStateOf(false) }
+    val pauseButtonFocusRequester = remember { FocusRequester() }
+    val fontWeight = if (appSettings.isHighContrast) FontWeight.Bold else FontWeight.Normal
 
-    LaunchedEffect(key1 = currentStepIndex) {
-        // Set the time for the current step
-        timeLeft = steps.getOrNull(currentStepIndex)?.duration ?: 0
+    LaunchedEffect(key1 = currentStepIndex, key2 = isPaused) {
+        if (isPaused) {
+            return@LaunchedEffect
+        }
+
+        // Set the time for the current step if it's a new step
+        if (timeLeft == 0) {
+            timeLeft = steps.getOrNull(currentStepIndex)?.duration ?: 0
+        }
 
         // Run the countdown
         while (timeLeft > 0) {
             delay(1000)
-            timeLeft--
+            if (!isPaused) {
+                timeLeft--
+            }
         }
 
         // When the countdown is done, advance to the next step or finish
@@ -146,7 +161,7 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(text = exerciseDefinition.name, style = MaterialTheme.typography.headlineLarge)
+                    Text(text = exerciseDefinition.name, style = MaterialTheme.typography.headlineLarge, fontWeight = fontWeight)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (exerciseDefinition.lottieAnimationName != null) {
@@ -170,13 +185,38 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = exerciseDefinition.instruction, style = MaterialTheme.typography.bodyLarge)
+                    Text(text = exerciseDefinition.instruction, style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "Time left: ${formatTime(timeLeft)}", style = MaterialTheme.typography.bodyLarge)
+                    Text(text = "Time left: ${formatTime(timeLeft)}", style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Row {
+                        Button(
+                            onClick = { isPaused = !isPaused },
+                            modifier = Modifier.focusRequester(pauseButtonFocusRequester)
+                        ) {
+                            Text(if (isPaused) "Resume" else "Pause")
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Button(onClick = {
+                            if (currentStepIndex < steps.size - 1) {
+                                currentStepIndex++
+                                timeLeft = 0 // Reset timer to trigger LaunchedEffect correctly
+                            } else {
+                                onComplete()
+                            }
+                        }) {
+                            Text("Skip")
+                        }
+                    }
                 }
             }
         }
         Footer()
+    }
+
+    LaunchedEffect(Unit) {
+        pauseButtonFocusRequester.requestFocus()
     }
 }
 
@@ -203,7 +243,8 @@ fun Footer() {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun FinishedView(onComplete: () -> Unit) {
+fun FinishedView(appSettings: AppSettings, onComplete: () -> Unit) {
+    val fontWeight = if (appSettings.isHighContrast) FontWeight.Bold else FontWeight.Normal
     LaunchedEffect(Unit) {
         delay(3000)
         onComplete()
@@ -216,9 +257,9 @@ fun FinishedView(onComplete: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Well done!", style = MaterialTheme.typography.headlineLarge)
+        Text("Well done!", style = MaterialTheme.typography.headlineLarge, fontWeight = fontWeight)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("You're doing great. See you next time.", style = MaterialTheme.typography.bodyLarge)
+        Text("You're doing great. See you next time.", style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
     }
 }
 
