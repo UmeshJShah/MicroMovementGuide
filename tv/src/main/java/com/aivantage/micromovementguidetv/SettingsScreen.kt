@@ -43,6 +43,8 @@ import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -50,7 +52,7 @@ fun SettingsScreen(
     initialSettings: AppSettings,
     onSave: (AppSettings) -> Unit,
     onClose: () -> Unit,
-    onAboutClicked: () -> Unit // New parameter
+    onAboutClicked: () -> Unit
 ) {
     var tempSettings by remember { mutableStateOf(initialSettings) }
     val saveButtonFocusRequester = remember { FocusRequester() }
@@ -149,7 +151,7 @@ fun SettingsScreen(
                 Text("Cancel")
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Button(onClick = onAboutClicked) { // New About button
+            Button(onClick = onAboutClicked) {
                 Text("About")
             }
         }
@@ -172,10 +174,11 @@ fun PickerSettingItem(
 
     Row(
         modifier = Modifier
-            .fillMaxWidth() // Use fillMaxWidth
+            .fillMaxWidth()
             .padding(vertical = 8.dp)
             .focusRequester(remember { FocusRequester() })
             .focusable(interactionSource = interactionSource)
+            .background(if (isFocused) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
             .onKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) {
                     when (event.key.nativeKeyCode) {
@@ -194,11 +197,22 @@ fun PickerSettingItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween // Distribute space
     ) {
-        Text(label, style = if (isFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) { // Group icons and value
-            Icon(imageVector = Icons.Default.ChevronLeft, contentDescription = "Decrease")
-            Text(value, modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
-            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Increase")
+        // Left half: Label (right-justified within its natural space)
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal),
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+
+        // Right half: Value and Chevrons (left-justified within their natural space)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (isFocused) {
+                Icon(imageVector = Icons.Default.ChevronLeft, contentDescription = "Decrease")
+            }
+            Text(value, modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal))
+            if (isFocused) {
+                Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Increase")
+            }
         }
     }
 }
@@ -213,13 +227,16 @@ fun MultiSelectSettingItem(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val interactionSource = remember { MutableInteractionSource() } // Added interactionSource
+    val isFocused by interactionSource.collectIsFocusedAsState() // Added isFocused
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(
             modifier = Modifier
-                .fillMaxWidth() // Use fillMaxWidth
+                .fillMaxWidth()
                 .focusRequester(focusRequester)
-                .focusable()
+                .focusable(interactionSource = interactionSource) // Use interactionSource here
+                .background(if (isFocused || expanded) MaterialTheme.colorScheme.primaryContainer else Color.Transparent) // Highlight when focused OR expanded
                 .onKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
                         expanded = !expanded
@@ -230,31 +247,40 @@ fun MultiSelectSettingItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween // Distribute space
         ) {
-            Text(label, style = MaterialTheme.typography.bodyLarge)
+            // Left half: Label (right-justified within its natural space)
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal),
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+
+            // Right half: "X selected" text (left-justified within its natural space)
             Text(
                 text = if (selectedExerciseIds.isEmpty()) "None selected" else "${selectedExerciseIds.size} selected",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal),
+                modifier = Modifier.align(Alignment.CenterVertically)
             )
         }
 
         if (expanded) {
             LazyColumn(
                 modifier = Modifier
-                    .height(200.dp) // Fixed height for the scrollable list
+                    .height(200.dp)
                     .padding(start = 32.dp)
             ) {
                 items(allExercises) { exercise ->
                     val isSelected = exercise.id in selectedExerciseIds
                     val itemFocusRequester = remember { FocusRequester() }
-                    val interactionSource = remember { MutableInteractionSource() }
-                    val isFocused by interactionSource.collectIsFocusedAsState()
+                    val itemInteractionSource = remember { MutableInteractionSource() } // Renamed to avoid conflict
+                    val itemIsFocused by itemInteractionSource.collectIsFocusedAsState() // Renamed to avoid conflict
 
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth() // Use fillMaxWidth
+                            .fillMaxWidth()
                             .padding(vertical = 4.dp)
                             .focusRequester(itemFocusRequester)
-                            .focusable(interactionSource = interactionSource)
+                            .focusable(interactionSource = itemInteractionSource) // Use itemInteractionSource here
+                            .background(if (itemIsFocused) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent) // Use secondaryContainer for sub-items
                             .onKeyEvent { event ->
                                 if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
                                     val newSelection = if (isSelected) {
@@ -278,8 +304,7 @@ fun MultiSelectSettingItem(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = exercise.name,
-                            // No weight, let it wrap naturally within the remaining space
-                            style = if (isFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium
+                            style = (if (itemIsFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium).copy(fontWeight = FontWeight.Normal)
                         )
                     }
                 }
