@@ -1,6 +1,8 @@
 package com.aivantage.micromovementguidetv
 
 import android.content.Context
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +43,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
 import kotlinx.coroutines.delay
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -116,6 +120,7 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
     val steps = remember { exercisePack?.steps ?: emptyList() }
     var currentStepIndex by rememberSaveable { mutableStateOf(0) }
     var timeLeft by rememberSaveable { mutableStateOf(0) }
+    var progress by rememberSaveable { mutableStateOf(1f) }
     var isPaused by rememberSaveable { mutableStateOf(false) }
     val pauseButtonFocusRequester = remember { FocusRequester() }
     val fontWeight = if (appSettings.isHighContrast) FontWeight.Bold else FontWeight.Normal
@@ -125,20 +130,19 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
             return@LaunchedEffect
         }
 
-        // Set the time for the current step if it's a new step
+        val duration = steps.getOrNull(currentStepIndex)?.duration ?: 0
         if (timeLeft == 0) {
-            timeLeft = steps.getOrNull(currentStepIndex)?.duration ?: 0
+            timeLeft = duration
         }
 
-        // Run the countdown
         while (timeLeft > 0) {
+            progress = timeLeft.toFloat() / duration
             delay(1000)
             if (!isPaused) {
                 timeLeft--
             }
         }
 
-        // When the countdown is done, advance to the next step or finish
         if (currentStepIndex < steps.size - 1) {
             currentStepIndex++
         } else {
@@ -147,10 +151,10 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (steps.isNotEmpty() && currentStepIndex < steps.size) {
-            val currentStep = steps[currentStepIndex]
-            val exerciseDefinition = remember(currentStep.exerciseId) {
-                ExerciseDatabase.getDefinitionById(currentStep.exerciseId)
+        Crossfade(targetState = currentStepIndex, animationSpec = tween(500)) { stepIndex ->
+            val currentStep = steps.getOrNull(stepIndex)
+            val exerciseDefinition = remember(currentStep?.exerciseId) {
+                currentStep?.let { ExerciseDatabase.getDefinitionById(it.exerciseId) }
             }
 
             if (exerciseDefinition != null) {
@@ -164,30 +168,37 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
                     Text(text = exerciseDefinition.name, style = MaterialTheme.typography.headlineLarge, fontWeight = fontWeight)
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    if (exerciseDefinition.lottieAnimationName != null) {
-                        val composition by rememberLottieComposition(
-                            LottieCompositionSpec.Asset(exerciseDefinition.lottieAnimationName)
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = progress,
+                            modifier = Modifier.size(220.dp),
+                            strokeWidth = 8.dp
                         )
-                        LottieAnimation(
-                            composition = composition,
-                            iterations = LottieConstants.IterateForever,
-                            modifier = Modifier.size(200.dp)
-                        )
-                    } else {
-                        val drawableId = getDrawableId(LocalContext.current, exerciseDefinition.iconName)
-                        if (drawableId != null) {
-                            Icon(
-                                painter = painterResource(id = drawableId),
-                                contentDescription = exerciseDefinition.name,
-                                modifier = Modifier.size(100.dp)
+                        if (exerciseDefinition.lottieAnimationName != null) {
+                            val composition by rememberLottieComposition(
+                                LottieCompositionSpec.Asset(exerciseDefinition.lottieAnimationName)
                             )
+                            LottieAnimation(
+                                composition = composition,
+                                iterations = LottieConstants.IterateForever,
+                                modifier = Modifier.size(200.dp)
+                            )
+                        } else {
+                            val drawableId = getDrawableId(LocalContext.current, exerciseDefinition.iconName)
+                            if (drawableId != null) {
+                                Icon(
+                                    painter = painterResource(id = drawableId),
+                                    contentDescription = exerciseDefinition.name,
+                                    modifier = Modifier.size(100.dp)
+                                )
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = exerciseDefinition.instruction, style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
+                    Text(text = exerciseDefinition.instruction, style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "Time left: ${formatTime(timeLeft)}", style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
+                    Text(text = "Keep going...", style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Row {
@@ -201,7 +212,7 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
                         Button(onClick = {
                             if (currentStepIndex < steps.size - 1) {
                                 currentStepIndex++
-                                timeLeft = 0 // Reset timer to trigger LaunchedEffect correctly
+                                timeLeft = 0
                             } else {
                                 onComplete()
                             }
@@ -214,6 +225,7 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
         }
         Footer()
     }
+
 
     LaunchedEffect(Unit) {
         pauseButtonFocusRequester.requestFocus()

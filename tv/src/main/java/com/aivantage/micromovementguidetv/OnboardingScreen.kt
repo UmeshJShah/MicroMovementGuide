@@ -27,12 +27,21 @@ import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun OnboardingScreen(onOnboardingComplete: () -> Unit) {
+fun OnboardingScreen(
+    onOnboardingComplete: (AppSettings) -> Unit
+) {
     var currentStep by remember { mutableStateOf(0) }
+    var tempSettings by remember { mutableStateOf(AppSettings()) }
 
     when (currentStep) {
         0 -> DisclaimerStep(onContinue = { currentStep = 1 })
-        1 -> WelcomeStep(onOnboardingComplete = onOnboardingComplete)
+        1 -> WelcomeStep(onContinue = { currentStep = 2 })
+        2 -> ConditionStep(
+            settings = tempSettings,
+            onSettingsChanged = { tempSettings = it },
+            onContinue = { currentStep = 3 }
+        )
+        3 -> AllSetStep(onOnboardingComplete = { onOnboardingComplete(tempSettings) })
     }
 }
 
@@ -50,7 +59,8 @@ private fun DisclaimerStep(onContinue: () -> Unit) {
     ) {
         Text(
             text = "Important: Safety First",
-            style = MaterialTheme.typography.headlineLarge
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -74,7 +84,7 @@ private fun DisclaimerStep(onContinue: () -> Unit) {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun WelcomeStep(onOnboardingComplete: () -> Unit) {
+private fun WelcomeStep(onContinue: () -> Unit) {
     val focusRequester = remember { FocusRequester() }
 
     Column(
@@ -86,7 +96,8 @@ private fun WelcomeStep(onOnboardingComplete: () -> Unit) {
     ) {
         Text(
             text = "Welcome to the Micro-Movement Guide",
-            style = MaterialTheme.typography.headlineLarge
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -96,10 +107,98 @@ private fun WelcomeStep(onOnboardingComplete: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(
+            onClick = onContinue,
+            modifier = Modifier.focusRequester(focusRequester)
+        ) {
+            Text("Continue")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun ConditionStep(
+    settings: AppSettings,
+    onSettingsChanged: (AppSettings) -> Unit,
+    onContinue: () -> Unit
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Personalize Your Experience",
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Select a focus area to get exercises tailored to you.",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        PickerSettingItem(
+            label = "Condition Focus",
+            value = settings.condition,
+            onValueChange = { direction ->
+                val currentIndex = CONDITIONS.indexOf(settings.condition)
+                val nextIndex = (currentIndex + direction + CONDITIONS.size) % CONDITIONS.size
+                onSettingsChanged(settings.copy(condition = CONDITIONS[nextIndex]))
+            }
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onContinue,
+            modifier = Modifier.focusRequester(focusRequester)
+        ) {
+            Text("Continue")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun AllSetStep(onOnboardingComplete: () -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "You're All Set!",
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "The guide is now active. Enjoy your show!\n\n(Hint: You can quickly pause the guide for the rest of the day by pressing the back button 5 times.)",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
             onClick = onOnboardingComplete,
             modifier = Modifier.focusRequester(focusRequester)
         ) {
-            Text("Activate Guide")
+            Text("Finish Setup")
         }
     }
 

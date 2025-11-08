@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
@@ -37,8 +38,10 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
+import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.TimeUnit
 
 private const val KILL_SWITCH_PRESS_COUNT = 5
@@ -98,10 +101,12 @@ class MainActivity : ComponentActivity() {
                     if (isKilled) {
                         KillSwitchScreen()
                     } else if (!hasOnboarded) {
-                        OnboardingScreen(onOnboardingComplete = {
+                        OnboardingScreen(onOnboardingComplete = { newSettings ->
+                            SettingsManager.saveSettings(context, newSettings)
                             SettingsManager.setHasOnboarded(context, true)
+                            appSettings = newSettings
                             hasOnboarded = true
-                            scheduleExerciseWorker(context, appSettings)
+                            scheduleExerciseWorker(context, newSettings)
                         })
                     } else {
                         when (currentScreen) {
@@ -151,29 +156,58 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun MainScreen(onSettingsClicked: () -> Unit) {
+    val context = LocalContext.current
+    var nextBreakText by remember { mutableStateOf("Loading...") }
     val focusRequester = remember { FocusRequester() }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    LaunchedEffect(Unit) {
+        val workManager = WorkManager.getInstance(context)
+        val workInfosFuture: ListenableFuture<List<WorkInfo>> = workManager.getWorkInfosForUniqueWork(EXERCISE_WORK_TAG)
+
+        workInfosFuture.addListener({
+            val workInfos = workInfosFuture.get()
+            if (workInfos.isNotEmpty()) {
+                val workInfo = workInfos[0]
+                val nextRunTime = workInfo.nextScheduleTimeMillis
+                val currentTime = System.currentTimeMillis()
+                val minutesUntilNext = TimeUnit.MILLISECONDS.toMinutes(nextRunTime - currentTime)
+                nextBreakText = "Your next movement break is in about $minutesUntilNext minutes."
+            } else {
+                nextBreakText = "No breaks scheduled. Check settings."
+            }
+        }, context.mainExecutor)
+
+        focusRequester.requestFocus()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Micro-Movement Guide is active.")
-        IconButton(
+        Text(
+            text = "Welcome Back",
+            style = MaterialTheme.typography.headlineLarge
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = nextBreakText,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
             onClick = onSettingsClicked,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .focusRequester(focusRequester)
+            modifier = Modifier.focusRequester(focusRequester)
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Settings"
+                contentDescription = null,
+                modifier = Modifier.padding(end = 8.dp)
             )
+            Text("Settings")
         }
-    }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
     }
 }
 
