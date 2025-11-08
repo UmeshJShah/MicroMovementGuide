@@ -33,7 +33,8 @@ data class AppSettings(
     val condition: String = CONDITIONS.first(),
     val isHighContrast: Boolean = false,
     val dislikedExerciseIds: List<String> = emptyList(),
-    val isAppEnabled: Boolean = true
+    val isAppEnabled: Boolean = true,
+    val fontSizeMultiplier: Float = 1.0f
 ) : Serializable
 
 val CONDITIONS = listOf(

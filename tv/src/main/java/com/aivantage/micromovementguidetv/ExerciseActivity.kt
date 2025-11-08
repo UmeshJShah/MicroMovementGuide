@@ -47,7 +47,7 @@ class ExerciseActivity : ComponentActivity() {
 
 
         setContent {
-            MicroMovementGuideTheme {
+            MicroMovementGuideTheme(appSettings = appSettings ?: AppSettings()) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                 ) {

@@ -33,15 +33,17 @@ fun OnboardingScreen(
     var currentStep by remember { mutableStateOf(0) }
     var tempSettings by remember { mutableStateOf(AppSettings()) }
 
-    when (currentStep) {
-        0 -> DisclaimerStep(onContinue = { currentStep = 1 })
-        1 -> WelcomeStep(onContinue = { currentStep = 2 })
-        2 -> ConditionStep(
-            settings = tempSettings,
-            onSettingsChanged = { tempSettings = it },
-            onContinue = { currentStep = 3 }
-        )
-        3 -> AllSetStep(onOnboardingComplete = { onOnboardingComplete(tempSettings) })
+    MicroMovementGuideTheme(appSettings = tempSettings) { // Pass tempSettings to the theme
+        when (currentStep) {
+            0 -> DisclaimerStep(onContinue = { currentStep = 1 })
+            1 -> WelcomeStep(onContinue = { currentStep = 2 })
+            2 -> ConditionStep(
+                settings = tempSettings,
+                onSettingsChanged = { tempSettings = it },
+                onContinue = { currentStep = 3 }
+            )
+            3 -> AllSetStep(onOnboardingComplete = { onOnboardingComplete(tempSettings) })
+        }
     }
 }
 
@@ -211,7 +213,7 @@ private fun AllSetStep(onOnboardingComplete: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun OnboardingScreenPreview() {
-    MicroMovementGuideTheme {
+    MicroMovementGuideTheme(appSettings = AppSettings()) {
         OnboardingScreen(onOnboardingComplete = {})
     }
 }

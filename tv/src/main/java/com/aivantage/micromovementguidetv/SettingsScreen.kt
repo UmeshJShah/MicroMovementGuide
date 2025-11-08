@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -48,11 +49,18 @@ import androidx.compose.ui.graphics.Color
 fun SettingsScreen(
     initialSettings: AppSettings,
     onSave: (AppSettings) -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onAboutClicked: () -> Unit // New parameter
 ) {
     var tempSettings by remember { mutableStateOf(initialSettings) }
     val saveButtonFocusRequester = remember { FocusRequester() }
     val allExercises = remember { ExerciseDatabase.getAllExerciseDefinitions() }
+
+    val fontSizeOptions = listOf(
+        "Normal" to 1.0f,
+        "Large" to 1.2f,
+        "Extra Large" to 1.4f
+    )
 
     Column(
         modifier = Modifier
@@ -110,6 +118,16 @@ fun SettingsScreen(
         )
 
         PickerSettingItem(
+            label = "Font Size",
+            value = fontSizeOptions.first { it.second == tempSettings.fontSizeMultiplier }.first,
+            onValueChange = { direction ->
+                val currentIndex = fontSizeOptions.indexOfFirst { it.second == tempSettings.fontSizeMultiplier }
+                val nextIndex = (currentIndex + direction + fontSizeOptions.size) % fontSizeOptions.size
+                tempSettings = tempSettings.copy(fontSizeMultiplier = fontSizeOptions[nextIndex].second)
+            }
+        )
+
+        PickerSettingItem(
             label = "App Enabled",
             value = if (tempSettings.isAppEnabled) "On" else "Off",
             onValueChange = { _ ->
@@ -129,6 +147,10 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = onClose) {
                 Text("Cancel")
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = onAboutClicked) { // New About button
+                Text("About")
             }
         }
     }
@@ -150,6 +172,7 @@ fun PickerSettingItem(
 
     Row(
         modifier = Modifier
+            .fillMaxWidth() // Use fillMaxWidth
             .padding(vertical = 8.dp)
             .focusRequester(remember { FocusRequester() })
             .focusable(interactionSource = interactionSource)
@@ -168,12 +191,15 @@ fun PickerSettingItem(
                 }
                 false
             },
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween // Distribute space
     ) {
-        Text(label, modifier = Modifier.width(200.dp), style = if (isFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium)
-        Icon(imageVector = Icons.Default.ChevronLeft, contentDescription = "Decrease")
-        Text(value, modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
-        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Increase")
+        Text(label, style = if (isFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) { // Group icons and value
+            Icon(imageVector = Icons.Default.ChevronLeft, contentDescription = "Decrease")
+            Text(value, modifier = Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodyLarge)
+            Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Increase")
+        }
     }
 }
 
@@ -191,6 +217,7 @@ fun MultiSelectSettingItem(
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(
             modifier = Modifier
+                .fillMaxWidth() // Use fillMaxWidth
                 .focusRequester(focusRequester)
                 .focusable()
                 .onKeyEvent { event ->
@@ -200,10 +227,10 @@ fun MultiSelectSettingItem(
                     }
                     false
                 },
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween // Distribute space
         ) {
-            Text(label, modifier = Modifier.width(200.dp), style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.width(16.dp))
+            Text(label, style = MaterialTheme.typography.bodyLarge)
             Text(
                 text = if (selectedExerciseIds.isEmpty()) "None selected" else "${selectedExerciseIds.size} selected",
                 style = MaterialTheme.typography.bodyLarge
@@ -224,6 +251,7 @@ fun MultiSelectSettingItem(
 
                     Row(
                         modifier = Modifier
+                            .fillMaxWidth() // Use fillMaxWidth
                             .padding(vertical = 4.dp)
                             .focusRequester(itemFocusRequester)
                             .focusable(interactionSource = interactionSource)
@@ -250,6 +278,7 @@ fun MultiSelectSettingItem(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = exercise.name,
+                            // No weight, let it wrap naturally within the remaining space
                             style = if (isFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -269,7 +298,7 @@ fun MultiSelectSettingItem(
 @Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
-    MicroMovementGuideTheme {
-        SettingsScreen(initialSettings = AppSettings(), onSave = {}, onClose = {})
+    MicroMovementGuideTheme(appSettings = AppSettings()) {
+        SettingsScreen(initialSettings = AppSettings(), onSave = {}, onClose = {}, onAboutClicked = {})
     }
 }

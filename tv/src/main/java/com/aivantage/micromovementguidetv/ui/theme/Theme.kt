@@ -6,10 +6,12 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
 import androidx.tv.material3.lightColorScheme
+import com.aivantage.micromovementguidetv.AppSettings
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun MicroMovementGuideTheme(
+    appSettings: AppSettings = AppSettings(), // Default to normal font size
     isInDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
@@ -28,7 +30,7 @@ fun MicroMovementGuideTheme(
     }
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = ScaledTypography(appSettings.fontSizeMultiplier),
         content = content
     )
 }

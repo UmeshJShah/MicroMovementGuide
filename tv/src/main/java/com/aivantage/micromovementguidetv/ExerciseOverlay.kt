@@ -57,30 +57,32 @@ fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
     val backgroundAlpha = if (appSettings.isHighContrast) 0.9f else 0.75f
     val context = LocalContext.current
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = backgroundAlpha))
-    ) {
-        when (view) {
-            "prompt" -> {
-                PromptView(
-                    appSettings = appSettings,
-                    onStart = { view = "exercising" },
-                    onDismiss = onComplete,
-                    onSnooze = {
-                        scheduleSnooze(context, onComplete)
-                    }
-                )
-            }
-            "exercising" -> {
-                ExercisingView(
-                    appSettings = appSettings,
-                    onComplete = { view = "finished" }
-                )
-            }
-            "finished" -> {
-                FinishedView(appSettings = appSettings, onComplete = onComplete)
+    MicroMovementGuideTheme(appSettings = appSettings) { // Pass appSettings to the theme
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = backgroundAlpha))
+        ) {
+            when (view) {
+                "prompt" -> {
+                    PromptView(
+                        appSettings = appSettings,
+                        onStart = { view = "exercising" },
+                        onDismiss = onComplete,
+                        onSnooze = {
+                            scheduleSnooze(context, onComplete)
+                        }
+                    )
+                }
+                "exercising" -> {
+                    ExercisingView(
+                        appSettings = appSettings,
+                        onComplete = { view = "finished" }
+                    )
+                }
+                "finished" -> {
+                    FinishedView(appSettings = appSettings, onComplete = onComplete)
+                }
             }
         }
     }
@@ -315,7 +317,7 @@ fun FinishedView(appSettings: AppSettings, onComplete: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun ExerciseOverlayPreview() {
-    MicroMovementGuideTheme {
+    MicroMovementGuideTheme(appSettings = AppSettings(condition = "General Wellness")) {
         ExerciseOverlay(appSettings = AppSettings(condition = "General Wellness"), onComplete = {})
     }
 }

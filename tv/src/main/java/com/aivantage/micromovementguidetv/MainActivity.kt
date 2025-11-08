@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 if (killSwitchPresses >= KILL_SWITCH_PRESS_COUNT) {
                     cancelExerciseWorker(this@MainActivity)
                     setContent {
-                        MicroMovementGuideTheme {
+                        MicroMovementGuideTheme(appSettings = SettingsManager.getSettings(this@MainActivity)) {
                             KillSwitchScreen()
                         }
                     }
@@ -90,13 +90,13 @@ class MainActivity : ComponentActivity() {
         })
 
         setContent {
-            MicroMovementGuideTheme {
-                val context = LocalContext.current
-                var hasOnboarded by remember { mutableStateOf(SettingsManager.hasOnboarded(context)) }
-                var appSettings by remember { mutableStateOf(SettingsManager.getSettings(context)) }
-                var currentScreen by remember { mutableStateOf("Main") }
-                var isKilled by remember { mutableStateOf(false) }
+            val context = LocalContext.current
+            var hasOnboarded by remember { mutableStateOf(SettingsManager.hasOnboarded(context)) }
+            var appSettings by remember { mutableStateOf(SettingsManager.getSettings(context)) }
+            var currentScreen by remember { mutableStateOf("Main") }
+            var isKilled by remember { mutableStateOf(false) }
 
+            MicroMovementGuideTheme(appSettings = appSettings) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = RectangleShape
@@ -134,8 +134,10 @@ class MainActivity : ComponentActivity() {
                                     // Reschedule the worker with the new settings
                                     scheduleExerciseWorker(context, newSettings)
                                 },
-                                onClose = { currentScreen = "Main" }
+                                onClose = { currentScreen = "Main" },
+                                onAboutClicked = { currentScreen = "About" } // Pass callback for About screen
                             )
+                            "About" -> AboutScreen(onBack = { currentScreen = "Settings" }) // New About screen
                         }
                     }
                 }
@@ -310,7 +312,7 @@ fun KillSwitchScreen() {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MicroMovementGuideTheme {
+    MicroMovementGuideTheme(appSettings = AppSettings()) {
         MainScreen(appSettings = AppSettings(), onSettingsClicked = {})
     }
 }
@@ -318,7 +320,7 @@ fun MainScreenPreview() {
 @Preview(showBackground = true)
 @Composable
 fun KillSwitchScreenPreview() {
-    MicroMovementGuideTheme {
+    MicroMovementGuideTheme(appSettings = AppSettings()) {
         KillSwitchScreen()
     }
 }
@@ -326,7 +328,7 @@ fun KillSwitchScreenPreview() {
 @Preview(showBackground = true)
 @Composable
 fun AppDisabledScreenPreview() {
-    MicroMovementGuideTheme {
+    MicroMovementGuideTheme(appSettings = AppSettings()) {
         AppDisabledScreen(onEnableApp = {})
     }
 }
