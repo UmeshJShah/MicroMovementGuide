@@ -1,9 +1,12 @@
 package com.aivantage.micromovementguidetv
 
+import android.content.ComponentName
 import android.content.Context
-import android.media.AudioManager
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Build
 import android.os.Bundle
-import android.view.KeyEvent
+import android.os.IBinder
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +16,35 @@ import androidx.tv.material3.Surface
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
 
 class ExerciseActivity : ComponentActivity() {
+
+    private var exerciseService: ExerciseService? = null
+    private var isBound = false
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            AppLogger.log(this@ExerciseActivity, "ExerciseActivity connected to service.")
+            val binder = service as ExerciseService.ExerciseServiceBinder
+            exerciseService = binder.getService()
+            isBound = true
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            AppLogger.log(this@ExerciseActivity, "ExerciseActivity disconnected from service.")
+            isBound = false
+        }
+    }
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val appSettings = intent.getSerializableExtra("appSettings") as? AppSettings
+        AppLogger.log(this, "ExerciseActivity created.")
+        val appSettings = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra("appSettings", AppSettings::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getSerializableExtra("appSettings") as? AppSettings
+        }
+
 
         setContent {
             MicroMovementGuideTheme {
@@ -27,19 +55,34 @@ class ExerciseActivity : ComponentActivity() {
                         ExerciseOverlay(
                             appSettings = appSettings,
                             onComplete = {
-                                resumeYouTube()
+                                AppLogger.log(this@ExerciseActivity, "Exercise complete, abandoning audio focus and finishing activity.")
+                                exerciseService?.abandonAudioFocus()
                                 finish()
                             }
                         )
+                    } else {
+                        AppLogger.log(this@ExerciseActivity, "ExerciseActivity started with null appSettings, finishing.")
+                        finish()
                     }
                 }
             }
         }
     }
 
-    private fun resumeYouTube() {
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val keyEvent = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY)
-        audioManager.dispatchMediaKeyEvent(keyEvent)
+    override fun onStart() {
+        super.onStart()
+        AppLogger.log(this, "ExerciseActivity started, binding to service.")
+        Intent(this, ExerciseService::class.java).also { intent ->
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        AppLogger.log(this, "ExerciseActivity stopped, unbinding from service.")
+        if (isBound) {
+            unbindService(connection)
+            isBound = false
+        }
     }
 }

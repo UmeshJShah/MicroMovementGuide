@@ -1,9 +1,9 @@
 package com.aivantage.micromovementguidetv
 
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
-import android.view.KeyEvent
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,10 +35,15 @@ import androidx.tv.material3.IconButton
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
+import java.util.concurrent.TimeUnit
 
 private const val KILL_SWITCH_PRESS_COUNT = 5
 private const val KILL_SWITCH_INTERVAL_MS = 1000L // 1 second
+private const val EXERCISE_WORK_TAG = "exerciseWork"
 
 class MainActivity : ComponentActivity() {
 
@@ -48,6 +53,36 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Handle the back button press for the kill switch
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val now = System.currentTimeMillis()
+                if (now - lastKillSwitchPressTime < KILL_SWITCH_INTERVAL_MS) {
+                    killSwitchPresses++
+                } else {
+                    killSwitchPresses = 1
+                }
+                lastKillSwitchPressTime = now
+
+                if (killSwitchPresses >= KILL_SWITCH_PRESS_COUNT) {
+                    cancelExerciseWorker(this@MainActivity)
+                    setContent {
+                        MicroMovementGuideTheme {
+                            KillSwitchScreen()
+                        }
+                    }
+                } else {
+                    // If the kill switch is not activated, perform the default back action
+                    if (isEnabled) {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
+                }
+            }
+        })
+
         setContent {
             MicroMovementGuideTheme {
                 val context = LocalContext.current
@@ -66,10 +101,7 @@ class MainActivity : ComponentActivity() {
                         OnboardingScreen(onOnboardingComplete = {
                             SettingsManager.setHasOnboarded(context, true)
                             hasOnboarded = true
-                            val serviceIntent = Intent(context, ExerciseService::class.java).apply {
-                                putExtra("appSettings", appSettings)
-                            }
-                            context.startService(serviceIntent)
+                            scheduleExerciseWorker(context, appSettings)
                         })
                     } else {
                         when (currentScreen) {
@@ -80,12 +112,8 @@ class MainActivity : ComponentActivity() {
                                     SettingsManager.saveSettings(context, newSettings)
                                     appSettings = newSettings
                                     currentScreen = "Main"
-                                    // Restart the service with the new settings
-                                    context.stopService(Intent(context, ExerciseService::class.java))
-                                    val serviceIntent = Intent(context, ExerciseService::class.java).apply {
-                                        putExtra("appSettings", newSettings)
-                                    }
-                                    context.startService(serviceIntent)
+                                    // Reschedule the worker with the new settings
+                                    scheduleExerciseWorker(context, newSettings)
                                 },
                                 onClose = { currentScreen = "Main" }
                             )
@@ -94,29 +122,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        // Start the worker if already onboarded
+        if (SettingsManager.hasOnboarded(this)) {
+            scheduleExerciseWorker(this, SettingsManager.getSettings(this))
+        }
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            val now = System.currentTimeMillis()
-            if (now - lastKillSwitchPressTime < KILL_SWITCH_INTERVAL_MS) {
-                killSwitchPresses++
-            } else {
-                killSwitchPresses = 1
-            }
-            lastKillSwitchPressTime = now
+    private fun scheduleExerciseWorker(context: Context, appSettings: AppSettings) {
+        val workManager = WorkManager.getInstance(context)
+        val workRequest = PeriodicWorkRequestBuilder<ExerciseWorker>(
+            appSettings.breakInterval.toLong(),
+            TimeUnit.MINUTES
+        )
+            .build()
 
-            if (killSwitchPresses >= KILL_SWITCH_PRESS_COUNT) {
-                stopService(Intent(this, ExerciseService::class.java))
-                setContent {
-                    MicroMovementGuideTheme {
-                        KillSwitchScreen()
-                    }
-                }
-                return true // Consume the event
-            }
-        }
-        return super.onKeyDown(keyCode, event)
+        workManager.enqueueUniquePeriodicWork(
+            EXERCISE_WORK_TAG,
+            ExistingPeriodicWorkPolicy.REPLACE,
+            workRequest
+        )
+    }
+
+    private fun cancelExerciseWorker(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(EXERCISE_WORK_TAG)
     }
 }
 
