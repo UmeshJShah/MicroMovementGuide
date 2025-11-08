@@ -1,6 +1,7 @@
 package com.aivantage.micromovementguidetv
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -8,10 +9,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
@@ -110,7 +113,10 @@ class MainActivity : ComponentActivity() {
                         })
                     } else {
                         when (currentScreen) {
-                            "Main" -> MainScreen(onSettingsClicked = { currentScreen = "Settings" })
+                            "Main" -> MainScreen(
+                                appSettings = appSettings,
+                                onSettingsClicked = { currentScreen = "Settings" }
+                            )
                             "Settings" -> SettingsScreen(
                                 initialSettings = appSettings,
                                 onSave = { newSettings ->
@@ -155,10 +161,17 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun MainScreen(onSettingsClicked: () -> Unit) {
+fun MainScreen(appSettings: AppSettings, onSettingsClicked: () -> Unit) {
     val context = LocalContext.current
     var nextBreakText by remember { mutableStateOf("Loading...") }
     val focusRequester = remember { FocusRequester() }
+
+    fun startExercise() {
+        val serviceIntent = Intent(context, ExerciseService::class.java).apply {
+            putExtra("appSettings", appSettings)
+        }
+        context.startService(serviceIntent)
+    }
 
     LaunchedEffect(Unit) {
         val workManager = WorkManager.getInstance(context)
@@ -197,16 +210,24 @@ fun MainScreen(onSettingsClicked: () -> Unit) {
             style = MaterialTheme.typography.bodyLarge
         )
         Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onSettingsClicked,
-            modifier = Modifier.focusRequester(focusRequester)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Text("Settings")
+        Row {
+            Button(
+                onClick = { startExercise() },
+                modifier = Modifier.focusRequester(focusRequester)
+            ) {
+                Text("Start Now")
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Button(
+                onClick = onSettingsClicked
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Settings")
+            }
         }
     }
 }
@@ -239,7 +260,7 @@ fun KillSwitchScreen() {
 @Composable
 fun MainScreenPreview() {
     MicroMovementGuideTheme {
-        MainScreen(onSettingsClicked = {})
+        MainScreen(appSettings = AppSettings(), onSettingsClicked = {})
     }
 }
 

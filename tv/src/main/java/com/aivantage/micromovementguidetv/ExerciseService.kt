@@ -59,7 +59,7 @@ class ExerciseService : Service() {
             if (requestAudioFocus()) {
                 AppLogger.log(this@ExerciseService, "Audio focus granted, playing chime.")
                 playChime()
-                delay(2000) // Wait for 2 seconds
+                delay(2000) // Wait for 2 seconds for the chime to play
                 AppLogger.log(this@ExerciseService, "Starting ExerciseActivity.")
                 val exerciseIntent = Intent(this@ExerciseService, ExerciseActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

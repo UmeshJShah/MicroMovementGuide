@@ -18,6 +18,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -37,12 +39,15 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
 import kotlinx.coroutines.delay
+import java.util.concurrent.TimeUnit
 import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -50,6 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
     var view by rememberSaveable { mutableStateOf("prompt") }
     val backgroundAlpha = if (appSettings.isHighContrast) 0.9f else 0.75f
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -61,7 +67,10 @@ fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
                 PromptView(
                     appSettings = appSettings,
                     onStart = { view = "exercising" },
-                    onDismiss = onComplete
+                    onDismiss = onComplete,
+                    onSnooze = {
+                        scheduleSnooze(context, onComplete)
+                    }
                 )
             }
             "exercising" -> {
@@ -77,9 +86,24 @@ fun ExerciseOverlay(appSettings: AppSettings, onComplete: () -> Unit) {
     }
 }
 
+private fun scheduleSnooze(context: Context, onComplete: () -> Unit) {
+    val workManager = WorkManager.getInstance(context)
+    val workRequest = OneTimeWorkRequestBuilder<ExerciseWorker>()
+        .setInitialDelay(10, TimeUnit.MINUTES)
+        .build()
+
+    workManager.enqueue(workRequest)
+    onComplete()
+}
+
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun PromptView(appSettings: AppSettings, onStart: () -> Unit, onDismiss: () -> Unit) {
+fun PromptView(
+    appSettings: AppSettings,
+    onStart: () -> Unit,
+    onDismiss: () -> Unit,
+    onSnooze: () -> Unit
+) {
     val okButtonFocusRequester = remember { FocusRequester() }
     val fontWeight = if (appSettings.isHighContrast) FontWeight.Bold else FontWeight.Normal
 
@@ -102,6 +126,10 @@ fun PromptView(appSettings: AppSettings, onStart: () -> Unit, onDismiss: () -> U
                 Text("OK")
             }
             Spacer(modifier = Modifier.width(16.dp))
+            Button(onClick = onSnooze) {
+                Text("Snooze")
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = onDismiss) {
                 Text("DISMISS")
             }
@@ -118,9 +146,9 @@ fun PromptView(appSettings: AppSettings, onStart: () -> Unit, onDismiss: () -> U
 fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
     val exercisePack = remember { ExerciseDatabase.getExercisePackForCondition(appSettings.condition) }
     val steps = remember { exercisePack?.steps ?: emptyList() }
-    var currentStepIndex by rememberSaveable { mutableStateOf(0) }
-    var timeLeft by rememberSaveable { mutableStateOf(0) }
-    var progress by rememberSaveable { mutableStateOf(1f) }
+    var currentStepIndex by rememberSaveable { mutableIntStateOf(0) }
+    var timeLeft by rememberSaveable { mutableIntStateOf(0) }
+    var progress by rememberSaveable { mutableFloatStateOf(1f) }
     var isPaused by rememberSaveable { mutableStateOf(false) }
     val pauseButtonFocusRequester = remember { FocusRequester() }
     val fontWeight = if (appSettings.isHighContrast) FontWeight.Bold else FontWeight.Normal
@@ -170,7 +198,7 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
 
                     Box(contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
-                            progress = progress,
+                            progress = { progress },
                             modifier = Modifier.size(220.dp),
                             strokeWidth = 8.dp
                         )
@@ -184,7 +212,7 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
                                 modifier = Modifier.size(200.dp)
                             )
                         } else {
-                            val drawableId = getDrawableId(LocalContext.current, exerciseDefinition.iconName)
+                            val drawableId = getDrawableIdByName(exerciseDefinition.iconName)
                             if (drawableId != null) {
                                 Icon(
                                     painter = painterResource(id = drawableId),
@@ -232,9 +260,18 @@ fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
     }
 }
 
-private fun getDrawableId(context: Context, iconName: String): Int? {
-    val resourceId = context.resources.getIdentifier(iconName, "drawable", context.packageName)
-    return if (resourceId == 0) null else resourceId
+// Compile-time safe mapping for drawable resources
+private fun getDrawableIdByName(iconName: String): Int? {
+    return when (iconName) {
+        "ic_neck_stretch" -> R.drawable.ic_neck_stretch
+        "ic_hand_clench" -> R.drawable.ic_hand_clench
+        "ic_ankle_rotation" -> R.drawable.ic_ankle_rotation
+        "ic_shoulder_roll" -> R.drawable.ic_shoulder_roll
+        "ic_seated_marching" -> R.drawable.ic_seated_marching
+        "ic_wrist_bends" -> R.drawable.ic_wrist_bends
+        "ic_deep_breathing" -> R.drawable.ic_deep_breathing
+        else -> null
+    }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -273,12 +310,6 @@ fun FinishedView(appSettings: AppSettings, onComplete: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         Text("You're doing great. See you next time.", style = MaterialTheme.typography.bodyLarge, fontWeight = fontWeight)
     }
-}
-
-private fun formatTime(seconds: Int): String {
-    val minutes = seconds / 60
-    val remainingSeconds = seconds % 60
-    return "%02d:%02d".format(minutes, remainingSeconds)
 }
 
 @Preview(showBackground = true)

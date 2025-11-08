@@ -1,0 +1,83 @@
+[
+  {
+    "condition": "General Wellness",
+    "steps": [
+      {
+        "exerciseId": "deep_breathing",
+        "duration": 45
+      },
+      {
+        "exerciseId": "seated_marching",
+        "duration": 90
+      },
+      {
+        "exerciseId": "shoulder_rolls",
+        "duration": 45
+      }
+    ]
+  },
+  {
+    "condition": "Parkinson's",
+    "steps": [
+      {
+        "exerciseId": "hand_clenches",
+        "duration": 60
+      },
+      {
+        "exerciseId": "wrist_bends",
+        "duration": 60
+      },
+      {
+        "exerciseId": "seated_marching",
+        "duration": 60
+      }
+    ]
+  },
+  {
+    "condition": "Diabetes",
+    "steps": [
+      {
+        "exerciseId": "ankle_rotations",
+        "duration": 60
+      },
+      {
+        "exerciseId": "seated_marching",
+        "duration": 90
+      },
+      {
+        "exerciseId": "hand_clenches",
+        "duration": 30
+      }
+    ]
+  },
+  {
+    "condition": "Arthritis",
+    "steps": [
+      {
+        "exerciseId": "wrist_bends",
+        "duration": 60
+      },
+      {
+        "exerciseId": "shoulder_rolls",
+        "duration": 60
+      },
+      {
+        "exerciseId": "neck_stretch_side_to_side",
+        "duration": 60
+      }
+    ]
+  },
+  {
+    "condition": "Post-Surgery Recovery",
+    "steps": [
+      {
+        "exerciseId": "deep_breathing",
+        "duration": 90
+      },
+      {
+        "exerciseId": "ankle_rotations",
+        "duration": 90
+      }
+    ]
+  }
+]
