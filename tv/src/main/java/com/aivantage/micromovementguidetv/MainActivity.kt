@@ -199,8 +199,17 @@ fun MainScreen(appSettings: AppSettings, onSettingsClicked: () -> Unit) {
                 val workInfo = workInfos[0]
                 val nextRunTime = workInfo.nextScheduleTimeMillis
                 val currentTime = System.currentTimeMillis()
-                val minutesUntilNext = TimeUnit.MILLISECONDS.toMinutes(nextRunTime - currentTime)
-                nextBreakText = "Your next movement break is in about $minutesUntilNext minutes."
+
+                // Only calculate and display time if the work is ENQUEUED and scheduled for the future
+                if (workInfo.state == WorkInfo.State.ENQUEUED && nextRunTime > currentTime) {
+                    val minutesUntilNext = TimeUnit.MILLISECONDS.toMinutes(nextRunTime - currentTime)
+                    nextBreakText = "Your next movement break is in about $minutesUntilNext minutes."
+                } else if (workInfo.state == WorkInfo.State.RUNNING) {
+                    nextBreakText = "Movement break in progress!"
+                } else {
+                    // Covers SUCCEEDED, FAILED, CANCELLED, BLOCKED, or ENQUEUED but nextRunTime is in the past/0
+                    nextBreakText = "No breaks scheduled. Check settings."
+                }
             } else {
                 nextBreakText = "No breaks scheduled. Check settings."
             }
