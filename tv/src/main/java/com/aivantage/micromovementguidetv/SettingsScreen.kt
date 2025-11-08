@@ -101,20 +101,19 @@ fun SettingsScreen(
         )
 
         MultiSelectSettingItem(
-            label = "Preferred Exercises",
-            allExercises = allExercises,
-            selectedExerciseIds = tempSettings.preferredExerciseIds,
-            onSelectionChanged = { newSelection ->
-                tempSettings = tempSettings.copy(preferredExerciseIds = newSelection)
-            }
-        )
-
-        MultiSelectSettingItem(
             label = "Disliked Exercises",
             allExercises = allExercises,
             selectedExerciseIds = tempSettings.dislikedExerciseIds,
             onSelectionChanged = { newSelection ->
                 tempSettings = tempSettings.copy(dislikedExerciseIds = newSelection)
+            }
+        )
+
+        PickerSettingItem(
+            label = "App Enabled",
+            value = if (tempSettings.isAppEnabled) "On" else "Off",
+            onValueChange = { _ ->
+                tempSettings = tempSettings.copy(isAppEnabled = !tempSettings.isAppEnabled)
             }
         )
 

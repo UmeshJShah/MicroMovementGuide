@@ -111,7 +111,15 @@ class MainActivity : ComponentActivity() {
                             hasOnboarded = true
                             scheduleExerciseWorker(context, newSettings)
                         })
-                    } else {
+                    } else if (!appSettings.isAppEnabled) {
+                        AppDisabledScreen(onEnableApp = {
+                            val updatedSettings = appSettings.copy(isAppEnabled = true)
+                            SettingsManager.saveSettings(context, updatedSettings)
+                            appSettings = updatedSettings
+                            scheduleExerciseWorker(context, updatedSettings)
+                        })
+                    }
+                    else {
                         when (currentScreen) {
                             "Main" -> MainScreen(
                                 appSettings = appSettings,
@@ -141,6 +149,12 @@ class MainActivity : ComponentActivity() {
 
     private fun scheduleExerciseWorker(context: Context, appSettings: AppSettings) {
         val workManager = WorkManager.getInstance(context)
+
+        if (!appSettings.isAppEnabled) {
+            cancelExerciseWorker(context)
+            return
+        }
+
         val workRequest = PeriodicWorkRequestBuilder<ExerciseWorker>(
             appSettings.breakInterval.toLong(),
             TimeUnit.MINUTES
@@ -234,6 +248,43 @@ fun MainScreen(appSettings: AppSettings, onSettingsClicked: () -> Unit) {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
+fun AppDisabledScreen(onEnableApp: () -> Unit) {
+    val enableButtonFocusRequester = remember { FocusRequester() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Micro-Movement Guide is currently disabled.",
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "To re-enable, click the button below.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onEnableApp,
+            modifier = Modifier.focusRequester(enableButtonFocusRequester)
+        ) {
+            Text("Enable App")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        enableButtonFocusRequester.requestFocus()
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
 fun KillSwitchScreen() {
     Column(
         modifier = Modifier
@@ -269,5 +320,13 @@ fun MainScreenPreview() {
 fun KillSwitchScreenPreview() {
     MicroMovementGuideTheme {
         KillSwitchScreen()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AppDisabledScreenPreview() {
+    MicroMovementGuideTheme {
+        AppDisabledScreen(onEnableApp = {})
     }
 }

@@ -10,9 +10,16 @@ class ExerciseWorker(appContext: Context, workerParams: WorkerParameters) :
 
     override fun doWork(): Result {
         AppLogger.log(applicationContext, "ExerciseWorker started.")
+        val appSettings = SettingsManager.getSettings(applicationContext)
+
+        // If the app is disabled, immediately stop the worker
+        if (!appSettings.isAppEnabled) {
+            AppLogger.log(applicationContext, "App is disabled, skipping exercise worker execution.")
+            return Result.success()
+        }
+
         // This worker's only job is to start the ExerciseService.
         // The service will then handle the audio focus and show the activity.
-        val appSettings = SettingsManager.getSettings(applicationContext)
         val serviceIntent = Intent(applicationContext, ExerciseService::class.java).apply {
             putExtra("appSettings", appSettings)
         }
