@@ -26,12 +26,22 @@ object ExerciseDatabase {
         }
     }
 
-    fun getExercisePackForCondition(condition: String): ExercisePack? {
-        return exercisePacks.find { it.condition == condition }
+    fun getExercisePackForCondition(condition: String, appSettings: AppSettings): ExercisePack? {
+        val basePack = exercisePacks.find { it.condition == condition }
             ?: exercisePacks.find { it.condition == "General Wellness" }
+
+        return basePack?.copy(
+            steps = basePack.steps.filter { step ->
+                step.exerciseId !in appSettings.dislikedExerciseIds
+            }
+        )
     }
 
     fun getDefinitionById(id: String): ExerciseDefinition? {
         return exerciseDefinitions.find { it.id == id }
+    }
+
+    fun getAllExerciseDefinitions(): List<ExerciseDefinition> {
+        return exerciseDefinitions
     }
 }

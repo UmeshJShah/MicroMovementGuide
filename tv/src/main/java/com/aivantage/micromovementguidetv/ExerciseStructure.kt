@@ -31,7 +31,9 @@ data class AppSettings(
     val breakInterval: Int = 20, // in minutes
     val exerciseDuration: Int = 3, // in minutes
     val condition: String = CONDITIONS.first(),
-    val isHighContrast: Boolean = false
+    val isHighContrast: Boolean = false,
+    val preferredExerciseIds: List<String> = emptyList(),
+    val dislikedExerciseIds: List<String> = emptyList()
 ) : Serializable
 
 val CONDITIONS = listOf(

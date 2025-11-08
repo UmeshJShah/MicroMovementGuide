@@ -144,7 +144,7 @@ fun PromptView(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun ExercisingView(appSettings: AppSettings, onComplete: () -> Unit) {
-    val exercisePack = remember { ExerciseDatabase.getExercisePackForCondition(appSettings.condition) }
+    val exercisePack = remember { ExerciseDatabase.getExercisePackForCondition(appSettings.condition, appSettings) }
     val steps = remember { exercisePack?.steps ?: emptyList() }
     var currentStepIndex by rememberSaveable { mutableIntStateOf(0) }
     var timeLeft by rememberSaveable { mutableIntStateOf(0) }

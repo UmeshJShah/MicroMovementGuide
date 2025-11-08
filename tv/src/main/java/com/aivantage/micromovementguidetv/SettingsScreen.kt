@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +39,9 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -47,6 +52,7 @@ fun SettingsScreen(
 ) {
     var tempSettings by remember { mutableStateOf(initialSettings) }
     val saveButtonFocusRequester = remember { FocusRequester() }
+    val allExercises = remember { ExerciseDatabase.getAllExerciseDefinitions() }
 
     Column(
         modifier = Modifier
@@ -91,6 +97,24 @@ fun SettingsScreen(
             value = if (tempSettings.isHighContrast) "On" else "Off",
             onValueChange = { _ ->
                 tempSettings = tempSettings.copy(isHighContrast = !tempSettings.isHighContrast)
+            }
+        )
+
+        MultiSelectSettingItem(
+            label = "Preferred Exercises",
+            allExercises = allExercises,
+            selectedExerciseIds = tempSettings.preferredExerciseIds,
+            onSelectionChanged = { newSelection ->
+                tempSettings = tempSettings.copy(preferredExerciseIds = newSelection)
+            }
+        )
+
+        MultiSelectSettingItem(
+            label = "Disliked Exercises",
+            allExercises = allExercises,
+            selectedExerciseIds = tempSettings.dislikedExerciseIds,
+            onSelectionChanged = { newSelection ->
+                tempSettings = tempSettings.copy(dislikedExerciseIds = newSelection)
             }
         )
 
@@ -153,6 +177,95 @@ fun PickerSettingItem(
         Icon(imageVector = Icons.Default.ChevronRight, contentDescription = "Increase")
     }
 }
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun MultiSelectSettingItem(
+    label: String,
+    allExercises: List<ExerciseDefinition>,
+    selectedExerciseIds: List<String>,
+    onSelectionChanged: (List<String>) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Row(
+            modifier = Modifier
+                .focusRequester(focusRequester)
+                .focusable()
+                .onKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
+                        expanded = !expanded
+                        return@onKeyEvent true
+                    }
+                    false
+                },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, modifier = Modifier.width(200.dp), style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = if (selectedExerciseIds.isEmpty()) "None selected" else "${selectedExerciseIds.size} selected",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+
+        if (expanded) {
+            LazyColumn(
+                modifier = Modifier
+                    .height(200.dp) // Fixed height for the scrollable list
+                    .padding(start = 32.dp)
+            ) {
+                items(allExercises) { exercise ->
+                    val isSelected = exercise.id in selectedExerciseIds
+                    val itemFocusRequester = remember { FocusRequester() }
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isFocused by interactionSource.collectIsFocusedAsState()
+
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .focusRequester(itemFocusRequester)
+                            .focusable(interactionSource = interactionSource)
+                            .onKeyEvent { event ->
+                                if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
+                                    val newSelection = if (isSelected) {
+                                        selectedExerciseIds - exercise.id
+                                    } else {
+                                        selectedExerciseIds + exercise.id
+                                    }
+                                    onSelectionChanged(newSelection)
+                                    return@onKeyEvent true
+                                }
+                                false
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (isSelected) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = if (isSelected) "Selected" else "Not Selected",
+                            tint = if (isSelected) Color.Green else Color.Red,
+                            modifier = Modifier.height(24.dp).width(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = exercise.name,
+                            style = if (isFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(expanded) {
+        if (!expanded) {
+            focusRequester.requestFocus()
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
