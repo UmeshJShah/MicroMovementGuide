@@ -33,7 +33,7 @@ fun AboutScreen(onBack: () -> Unit) {
     val appVersion: String = try {
         // Use the Elvis operator to provide a default value if versionName is null
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "N/A"
-    } catch (e: PackageManager.NameNotFoundException) {
+    } catch (_: PackageManager.NameNotFoundException) { // Fixed: unused parameter 'e'
         "Unknown"
     }
 
@@ -78,7 +78,7 @@ fun AboutScreen(onBack: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun AboutScreenPreview() {
-    MicroMovementGuideTheme {
+    MicroMovementGuideTheme(appSettings = AppSettings()) { // Fixed: explicitly pass AppSettings
         AboutScreen(onBack = {})
     }
 }
