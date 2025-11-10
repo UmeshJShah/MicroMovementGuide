@@ -1,8 +1,0 @@
-
-INSTRUCTIONS:
-
-1. Build your React web application (e.g., by running `npm run build`).
-2. Delete this placeholder.txt file.
-3. Copy all the contents from your project's `build` or `dist` folder (including index.html, static folder, etc.) directly into this `app/src/main/assets/` directory.
-
-The Android app will then load your `index.html` from here.

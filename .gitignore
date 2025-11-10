@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# IntelliJ and Android Studio
+.idea/
+*.iws
+*.ipr

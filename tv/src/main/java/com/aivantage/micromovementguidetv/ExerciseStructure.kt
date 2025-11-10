@@ -1,5 +1,6 @@
 package com.aivantage.micromovementguidetv
 
+import com.aivantage.micromovementguidetv.ui.theme.AppTheme // Import AppTheme
 import java.io.Serializable
 
 // Represents a unique, reusable exercise definition.
@@ -9,7 +10,7 @@ data class ExerciseDefinition(
     val name: String, // User-facing name like "Neck Stretches"
     val instruction: String, // Detailed instruction text
     val iconName: String, // The name of the drawable resource, e.g., "ic_neck_stretch"
-    val animationName: String? = null // Future-proofing for Lottie animations
+    val lottieAnimationName: String? = null // Field for Lottie animations
 )
 
 // Represents one step in an exercise routine.
@@ -31,6 +32,11 @@ data class AppSettings(
     val breakInterval: Int = 20, // in minutes
     val exerciseDuration: Int = 3, // in minutes
     val condition: String = CONDITIONS.first(),
+    val isHighContrast: Boolean = false,
+    val dislikedExerciseIds: List<String> = emptyList(),
+    val isAppEnabled: Boolean = true,
+    val fontSizeMultiplier: Float = 1.0f,
+    val appTheme: AppTheme = AppTheme.DEFAULT // Add appTheme property with a default
 ) : Serializable
 
 val CONDITIONS = listOf(
