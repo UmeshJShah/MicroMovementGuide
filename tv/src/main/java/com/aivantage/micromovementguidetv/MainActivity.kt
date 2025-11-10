@@ -2,6 +2,8 @@ package com.aivantage.micromovementguidetv
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -158,9 +160,13 @@ class MainActivity : ComponentActivity() {
         }
 
         val workRequest = PeriodicWorkRequestBuilder<ExerciseWorker>(
-            appSettings.breakInterval.toLong(),
-            TimeUnit.MINUTES
+            repeatInterval = appSettings.breakInterval.toLong(),
+            repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
+            .setInitialDelay(
+                duration = appSettings.breakInterval.toLong(), // Corrected parameter name
+                timeUnit = TimeUnit.MINUTES
+            )
             .build()
 
         workManager.enqueueUniquePeriodicWork(
@@ -218,42 +224,60 @@ fun MainScreen(appSettings: AppSettings, onSettingsClicked: () -> Unit) {
         focusRequester.requestFocus()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Welcome Back",
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = nextBreakText,
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Row {
-            Button(
-                onClick = { startExercise() },
-                modifier = Modifier.focusRequester(focusRequester)
-            ) {
-                Text("Start Now")
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Button(
-                onClick = onSettingsClicked
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text("Settings")
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Welcome Back",
+                style = MaterialTheme.typography.headlineLarge
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = nextBreakText,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Row {
+                Button(
+                    onClick = { startExercise() },
+                    modifier = Modifier.focusRequester(focusRequester)
+                ) {
+                    Text("Start Now")
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Button(
+                    onClick = onSettingsClicked
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Settings")
+                }
             }
         }
+        Text(
+            text = "Version: ${getAppVersionName(context) ?: "N/A"}",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        )
+    }
+}
+
+fun getAppVersionName(context: Context): String? {
+    return try {
+        val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.versionName
+    } catch (e: PackageManager.NameNotFoundException) {
+        null
     }
 }
 

@@ -1,5 +1,6 @@
 package com.aivantage.micromovementguidetv
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -12,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -27,11 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
@@ -39,12 +44,9 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import com.aivantage.micromovementguidetv.ui.theme.AppTheme
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.background
-import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -57,12 +59,23 @@ fun SettingsScreen(
     var tempSettings by remember { mutableStateOf(initialSettings) }
     val saveButtonFocusRequester = remember { FocusRequester() }
     val allExercises = remember { ExerciseDatabase.getAllExerciseDefinitions() }
+    var showSaveIndicator by remember { mutableStateOf(false) }
 
     val fontSizeOptions = listOf(
         "Normal" to 1.0f,
         "Large" to 1.2f,
         "Extra Large" to 1.4f
     )
+
+    LaunchedEffect(tempSettings) {
+        if (tempSettings != initialSettings) {
+            delay(30000) // 30 seconds
+            onSave(tempSettings)
+            showSaveIndicator = true
+            delay(2000) // Show indicator for 2 seconds
+            showSaveIndicator = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -73,6 +86,11 @@ fun SettingsScreen(
     ) {
         Text("Settings", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(32.dp))
+
+        if (showSaveIndicator) {
+            Text("Settings Saved!", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         PickerSettingItem(
             label = "Time Between Breaks",
@@ -126,6 +144,16 @@ fun SettingsScreen(
                 val currentIndex = fontSizeOptions.indexOfFirst { it.second == tempSettings.fontSizeMultiplier }
                 val nextIndex = (currentIndex + direction + fontSizeOptions.size) % fontSizeOptions.size
                 tempSettings = tempSettings.copy(fontSizeMultiplier = fontSizeOptions[nextIndex].second)
+            }
+        )
+
+        PickerSettingItem(
+            label = "App Theme",
+            value = tempSettings.appTheme.themeName,
+            onValueChange = { direction ->
+                val currentThemeIndex = AppTheme.entries.indexOf(tempSettings.appTheme)
+                val nextIndex = (currentThemeIndex + direction + AppTheme.entries.size) % AppTheme.entries.size
+                tempSettings = tempSettings.copy(appTheme = AppTheme.entries[nextIndex])
             }
         )
 
@@ -194,18 +222,22 @@ fun PickerSettingItem(
                 }
                 false
             },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween // Distribute space
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left half: Label (right-justified within its natural space)
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal),
-            modifier = Modifier.align(Alignment.CenterVertically)
-        )
+        Row(
+            modifier = Modifier.weight(0.5f),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(label, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal))
+        }
 
-        // Right half: Value and Chevrons (left-justified within their natural space)
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(modifier = Modifier.width(32.dp))
+
+        Row(
+            modifier = Modifier.weight(0.5f),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             if (isFocused) {
                 Icon(imageVector = Icons.Default.ChevronLeft, contentDescription = "Decrease")
             }
@@ -227,16 +259,16 @@ fun MultiSelectSettingItem(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
-    val interactionSource = remember { MutableInteractionSource() } // Added interactionSource
-    val isFocused by interactionSource.collectIsFocusedAsState() // Added isFocused
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
-                .focusable(interactionSource = interactionSource) // Use interactionSource here
-                .background(if (isFocused || expanded) MaterialTheme.colorScheme.primaryContainer else Color.Transparent) // Highlight when focused OR expanded
+                .focusable(interactionSource = interactionSource)
+                .background(if (isFocused || expanded) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                 .onKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
                         expanded = !expanded
@@ -244,69 +276,78 @@ fun MultiSelectSettingItem(
                     }
                     false
                 },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween // Distribute space
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left half: Label (right-justified within its natural space)
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal),
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
+            Row(
+                modifier = Modifier.weight(0.5f),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(label, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal))
+            }
 
-            // Right half: "X selected" text (left-justified within its natural space)
-            Text(
-                text = if (selectedExerciseIds.isEmpty()) "None selected" else "${selectedExerciseIds.size} selected",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal),
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
+            Spacer(modifier = Modifier.width(32.dp))
+
+            Row(
+                modifier = Modifier.weight(0.5f),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text(
+                    text = if (selectedExerciseIds.isEmpty()) "None selected" else "${selectedExerciseIds.size} selected",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal)
+                )
+            }
         }
 
         if (expanded) {
-            LazyColumn(
-                modifier = Modifier
-                    .height(200.dp)
-                    .padding(start = 32.dp)
-            ) {
-                items(allExercises) { exercise ->
-                    val isSelected = exercise.id in selectedExerciseIds
-                    val itemFocusRequester = remember { FocusRequester() }
-                    val itemInteractionSource = remember { MutableInteractionSource() } // Renamed to avoid conflict
-                    val itemIsFocused by itemInteractionSource.collectIsFocusedAsState() // Renamed to avoid conflict
+            Column {
+                LazyColumn(
+                    modifier = Modifier
+                        .height(200.dp)
+                        .padding(start = 32.dp)
+                ) {
+                    items(allExercises) { exercise ->
+                        val isSelected = exercise.id in selectedExerciseIds
+                        val itemFocusRequester = remember { FocusRequester() }
+                        val itemInteractionSource = remember { MutableInteractionSource() }
+                        val itemIsFocused by itemInteractionSource.collectIsFocusedAsState()
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .focusRequester(itemFocusRequester)
-                            .focusable(interactionSource = itemInteractionSource) // Use itemInteractionSource here
-                            .background(if (itemIsFocused) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent) // Use secondaryContainer for sub-items
-                            .onKeyEvent { event ->
-                                if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
-                                    val newSelection = if (isSelected) {
-                                        selectedExerciseIds - exercise.id
-                                    } else {
-                                        selectedExerciseIds + exercise.id
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .focusRequester(itemFocusRequester)
+                                .focusable(interactionSource = itemInteractionSource)
+                                .background(if (itemIsFocused) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                                .onKeyEvent { event ->
+                                    if (event.type == KeyEventType.KeyDown && event.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER) {
+                                        val newSelection = if (isSelected) {
+                                            selectedExerciseIds - exercise.id
+                                        } else {
+                                            selectedExerciseIds + exercise.id
+                                        }
+                                        onSelectionChanged(newSelection)
+                                        return@onKeyEvent true
                                     }
-                                    onSelectionChanged(newSelection)
-                                    return@onKeyEvent true
-                                }
-                                false
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (isSelected) Icons.Default.Check else Icons.Default.Close,
-                            contentDescription = if (isSelected) "Selected" else "Not Selected",
-                            tint = if (isSelected) Color.Green else Color.Red,
-                            modifier = Modifier.height(24.dp).width(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = exercise.name,
-                            style = (if (itemIsFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium).copy(fontWeight = FontWeight.Normal)
-                        )
+                                    false
+                                },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (isSelected) Icons.Default.Check else Icons.Default.Close,
+                                contentDescription = if (isSelected) "Selected" else "Not Selected",
+                                tint = if (isSelected) Color.Green else Color.Red,
+                                modifier = Modifier.height(24.dp).width(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = exercise.name,
+                                style = (if (itemIsFocused) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium).copy(fontWeight = FontWeight.Normal)
+                            )
+                        }
                     }
+                }
+                Button(onClick = { expanded = false }, modifier = Modifier.padding(start = 32.dp)) {
+                    Text("Done")
                 }
             }
         }

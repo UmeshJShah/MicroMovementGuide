@@ -1,5 +1,6 @@
 package com.aivantage.micromovementguidetv
 
+import com.aivantage.micromovementguidetv.ui.theme.AppTheme // Import AppTheme
 import java.io.Serializable
 
 // Represents a unique, reusable exercise definition.
@@ -34,7 +35,8 @@ data class AppSettings(
     val isHighContrast: Boolean = false,
     val dislikedExerciseIds: List<String> = emptyList(),
     val isAppEnabled: Boolean = true,
-    val fontSizeMultiplier: Float = 1.0f
+    val fontSizeMultiplier: Float = 1.0f,
+    val appTheme: AppTheme = AppTheme.DEFAULT // Add appTheme property with a default
 ) : Serializable
 
 val CONDITIONS = listOf(

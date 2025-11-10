@@ -24,6 +24,7 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.aivantage.micromovementguidetv.ui.theme.MicroMovementGuideTheme
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -80,6 +81,7 @@ private fun DisclaimerStep(onContinue: () -> Unit) {
     }
 
     LaunchedEffect(Unit) {
+        delay(100)
         focusRequester.requestFocus()
     }
 }
@@ -117,6 +119,7 @@ private fun WelcomeStep(onContinue: () -> Unit) {
     }
 
     LaunchedEffect(Unit) {
+        delay(100)
         focusRequester.requestFocus()
     }
 }
@@ -168,6 +171,7 @@ private fun ConditionStep(
     }
 
     LaunchedEffect(Unit) {
+        delay(100)
         focusRequester.requestFocus()
     }
 }
@@ -205,6 +209,7 @@ private fun AllSetStep(onOnboardingComplete: () -> Unit) {
     }
 
     LaunchedEffect(Unit) {
+        delay(100)
         focusRequester.requestFocus()
     }
 }

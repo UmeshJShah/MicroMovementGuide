@@ -1,6 +1,0 @@
-
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- The main theme for the TV app. It's fullscreen with no action bar. -->
-    <style name="Theme.MicroMovementGuide" parent="@style/Theme.Leanback" />
-</resources>
